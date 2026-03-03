@@ -1,0 +1,7 @@
+project: ai-agency-landing
+status: done
+tech_lead: Diego William
+environment: Antigravity
+global_adrs: _CORE_SKILLS/docs/ADR/agents-ia/
+stack: ["Next.js", "Tailwind CSS", "TypeScript"]
+decisions: ["ADR-001: Next.js + Tailwind CSS"]
