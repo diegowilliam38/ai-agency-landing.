@@ -1,0 +1,66 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: var(--font-inter);
+  
+  /* Core Colors based on premium tech aesthetics */
+  --color-primary-base: #3b82f6; /* Blue 500 */
+  --color-primary-glow: rgba(59, 130, 246, 0.5);
+  --color-secondary-base: #8b5cf6; /* Violet 500 */
+  
+  /* Dark Mode specific variables overrides inside base */
+  --color-background: #000000;
+  --color-surface: #0a0a0a;
+  --color-surface-elevated: #171717;
+  --color-surface-glass: rgba(23, 23, 23, 0.5);
+  
+  --color-foreground: #ffffff;
+  --color-foreground-muted: #a3a3a3;
+  --color-border: #262626;
+
+  /* Custom animations */
+  --animate-fade-in: fade-in 0.5s ease-out;
+  --animate-fade-up: fade-up 0.5s ease-out forwards;
+  --animate-float: float 6s ease-in-out infinite;
+
+  @keyframes fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  @keyframes fade-up {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes float {
+    0% { transform: translateY(0px); }
+    50% { transform: translateY(-10px); }
+    100% { transform: translateY(0px); }
+  }
+}
+
+@layer base {
+  :root {
+    --background: #000000;
+    --foreground: #ffffff;
+  }
+  
+  body {
+    @apply bg-[var(--background)] text-[var(--foreground)] antialiased min-h-screen selection:bg-blue-500/30;
+  }
+}
+
+@layer utilities {
+  .glass {
+    @apply bg-[#171717]/50 backdrop-blur-md border border-white/10 shadow-[0_4px_30px_rgba(0,0,0,0.1)];
+  }
+  
+  .glass-card {
+    @apply bg-gradient-to-b from-[#171717]/80 to-[#0a0a0a]/80 backdrop-blur-xl border border-white/[0.05] shadow-2xl;
+  }
+  
+  .text-gradient {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-violet-500;
+  }
+}
