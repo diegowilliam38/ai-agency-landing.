@@ -5,11 +5,13 @@ import { motion } from "framer-motion";
 import { 
   ArrowRight, Bot, Code, Server, Zap, CheckCircle2, 
   Scale, GraduationCap, Building2, Database, Workflow, 
-  LineChart, Lock, MessageCircle, Linkedin, ChevronDown, ChevronUp, AlertTriangle, Sparkles, X, Check 
+  LineChart, Lock, MessageCircle, Linkedin, ChevronDown, ChevronUp, AlertTriangle, Sparkles, X, Check, Layers, ShieldCheck, FileCode2 
 } from "lucide-react";
 import { ChatWidget } from "@/components/ChatWidget";
 import Capa3D from "@/components/Capa3D";
-import Network3D from "@/components/Network3D";
+import Juridico3D from "@/components/Juridico3D";
+import B2B3D from "@/components/B2B3D";
+import Edu3D from "@/components/Edu3D";
 
 export default function Home() {
   const [scrollProgress, setScrollProgress] = useState(0);
@@ -287,7 +289,7 @@ export default function Home() {
           className="mira-glass-card w-full max-w-5xl p-8 relative overflow-hidden"
         >
             <div className="mira-anim-stage" style={{aspectRatio: '21/9'}}>
-              <Network3D colorPrimary="#3b82f6" colorSecondary="#8b5cf6" />
+              <Juridico3D />
             </div>
         </motion.div>
       </section>
@@ -314,7 +316,7 @@ export default function Home() {
           className="mira-glass-card w-full max-w-5xl p-8 relative overflow-hidden"
         >
             <div className="mira-anim-stage" style={{aspectRatio: '21/9'}}>
-              <Network3D colorPrimary="#10b981" colorSecondary="#3b82f6" />
+              <B2B3D />
             </div>
         </motion.div>
       </section>
@@ -341,13 +343,136 @@ export default function Home() {
           className="mira-glass-card w-full max-w-5xl p-8 relative overflow-hidden"
         >
             <div className="mira-anim-stage" style={{aspectRatio: '21/9'}}>
-              <Network3D colorPrimary="#8b5cf6" colorSecondary="#10b981" />
+              <Edu3D />
             </div>
         </motion.div>
       </section>
 
-      {/* SLIDE 8: CTA */}
-      <section ref={el => {sectionsRef.current[7] = el}} className="min-h-screen flex flex-col items-center justify-center relative overflow-hidden px-6">
+      {/* SLIDE 8: ENGINEERING STACK */}
+      <section ref={el => {sectionsRef.current[7] = el}} className="min-h-screen flex flex-col items-center justify-center px-6 py-16">
+        <motion.div 
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="text-center mb-14 max-w-4xl"
+        >
+            <h2 className="text-4xl md:text-5xl font-black mb-4">Engineering Stack & Topologia</h2>
+            <p className="mira-text-soft text-lg">Padrões de desenvolvimento assistido por IA e as melhores ferramentas do mercado (LangChain, Pinecone, Next.js).</p>
+        </motion.div>
+        
+        <div className="grid md:grid-cols-4 gap-4 w-full max-w-6xl">
+            {/* Layer 1 */}
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              className="mira-glass-card p-6 border-blue-500/30"
+            >
+                <Database className="text-blue-500 w-8 h-8 mb-4" />
+                <h4 className="font-bold mb-2">1. Data Ingestion</h4>
+                <p className="text-xs mira-text-soft">ETL automatizado, conectores empresariais e ingestão de documentos estruturados (PDF, SQL, APIs).</p>
+                <div className="mt-4 flex gap-2 flex-wrap">
+                    <span className="text-[10px] px-2 py-1 bg-white/5 rounded-full border border-white/10">Python</span>
+                    <span className="text-[10px] px-2 py-1 bg-white/5 rounded-full border border-white/10">Airflow</span>
+                </div>
+            </motion.div>
+
+            {/* Layer 2 */}
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.1 }}
+              className="mira-glass-card p-6 border-violet-500/30"
+            >
+                <Layers className="text-violet-500 w-8 h-8 mb-4" />
+                <h4 className="font-bold mb-2">2. Vector Store (RAG)</h4>
+                <p className="text-xs mira-text-soft">Armazenamento semântico ultra-rápido garantindo que o agente só utilize o contexto exato e isolado da sua empresa.</p>
+                <div className="mt-4 flex gap-2 flex-wrap">
+                    <span className="text-[10px] px-2 py-1 bg-white/5 rounded-full border border-white/10">Pinecone</span>
+                    <span className="text-[10px] px-2 py-1 bg-white/5 rounded-full border border-white/10">Milvus</span>
+                </div>
+            </motion.div>
+
+            {/* Layer 3 */}
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.2 }}
+              className="mira-glass-card p-6 border-green-500/30"
+            >
+                <Workflow className="text-green-500 w-8 h-8 mb-4" />
+                <h4 className="font-bold mb-2">3. Orchestration</h4>
+                <p className="text-xs mira-text-soft">Criação de agentes autônomos com memória e ferramentas customizadas (Tool Calling e Chains).</p>
+                <div className="mt-4 flex gap-2 flex-wrap">
+                    <span className="text-[10px] px-2 py-1 bg-white/5 rounded-full border border-white/10">LangChain</span>
+                    <span className="text-[10px] px-2 py-1 bg-white/5 rounded-full border border-white/10">LangGraph</span>
+                </div>
+            </motion.div>
+
+            {/* Layer 4 */}
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.3 }}
+              className="mira-glass-card p-6 border-gray-500/30"
+            >
+                <FileCode2 className="text-gray-400 w-8 h-8 mb-4" />
+                <h4 className="font-bold mb-2">4. Application</h4>
+                <p className="text-xs mira-text-soft">Interfaces e Dashboards renderizados via servidor (SSR) para extrema velocidade e SEO (como esta página).</p>
+                <div className="mt-4 flex gap-2 flex-wrap">
+                    <span className="text-[10px] px-2 py-1 bg-white/5 rounded-full border border-white/10">Next.js 15+</span>
+                    <span className="text-[10px] px-2 py-1 bg-white/5 rounded-full border border-white/10">React 19</span>
+                </div>
+            </motion.div>
+        </div>
+      </section>
+
+      {/* SLIDE 9: GOVERNANÇA & OBSERVABILIDADE */}
+      <section ref={el => {sectionsRef.current[8] = el}} className="min-h-screen flex flex-col items-center justify-center px-6 py-16">
+        <div className="grid md:grid-cols-2 gap-12 w-full max-w-6xl items-center">
+            <motion.div 
+              initial={{ opacity: 0, x: -30 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+            >
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-blue-500/20 bg-blue-500/10 text-blue-400 text-xs font-bold uppercase tracking-wider mb-6">
+                  LLMOps & Qualidade
+                </div>
+                <h2 className="text-4xl md:text-5xl font-black mb-6">Não colocamos Agentes em produção às cegas.</h2>
+                <p className="mira-text-soft text-lg mb-8">
+                  Como pesquisadores e desenvolvedores focados em Frameworks de Governança corporativa, nosso rigor técnico é altíssimo. A IA precisa ser auditável.
+                </p>
+                <ul className="space-y-4">
+                    <li className="flex gap-3"><ShieldCheck className="mira-primary-color w-6 h-6 shrink-0" /> <div><strong>Proteção contra Prompt Injection:</strong> Barreiras de segurança nativas e sanitização de inputs do usuário.</div></li>
+                    <li className="flex gap-3"><ShieldCheck className="mira-primary-color w-6 h-6 shrink-0" /> <div><strong>LLM Tracing & Observabilidade:</strong> Rastreamento completo (custo, latência e steps de raciocínio) via LangSmith.</div></li>
+                    <li className="flex gap-3"><ShieldCheck className="mira-primary-color w-6 h-6 shrink-0" /> <div><strong>Testes Automatizados (CI/CD):</strong> Validação contínua do Pipeline de RAG para evitar alucinações antes de novos deploys.</div></li>
+                </ul>
+            </motion.div>
+            
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.9 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              viewport={{ once: true }}
+              className="mira-glass-card p-8 h-full min-h-[400px] flex items-center justify-center relative overflow-hidden"
+            >
+                <div className="absolute inset-0 opacity-20" style={{
+                    backgroundImage: 'radial-gradient(circle at center, var(--mira-primary) 1px, transparent 1px)',
+                    backgroundSize: '24px 24px'
+                }}></div>
+                <div className="text-center relative z-10">
+                    <Lock className="w-20 h-20 text-blue-500 mx-auto mb-6 opacity-80" />
+                    <h3 className="text-2xl font-bold mb-2">Zero Trust Architecture</h3>
+                    <p className="mira-text-soft text-sm">Garantimos conformidade absoluta com a LGPD e regras corporativas estritas.</p>
+                </div>
+            </motion.div>
+        </div>
+      </section>
+
+      {/* SLIDE 10: CTA */}
+      <section ref={el => {sectionsRef.current[9] = el}} className="min-h-screen flex flex-col items-center justify-center relative overflow-hidden px-6">
         <div className="absolute inset-0 pointer-events-none" style={{
             background: 'radial-gradient(ellipse at 50% 60%, var(--mira-glow-strong), transparent 65%)',
             animation: 'var(--animate-mira-pulse)'
