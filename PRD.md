@@ -32,10 +32,11 @@ A **Innovate e Solve IA** é uma agência focada na construção de ecossistemas
 
 ### 4.2. Não-Funcionais
 
-- **Performance (Core Web Vitals)**: Carregamento instantâneo via Server-Side Rendering (Next.js) para assegurar autoridade técnica.
-- **Estética "Wow!"**: Implementação de TailwindCSS v4 com variáveis customizadas para glassmorphism profundo, glows baseados no logo e fontes modernas (Inter).
+- **Performance (Core Web Vitals)**: Carregamento instantâneo via Server-Side Rendering (Next.js) para assegurar autoridade técnica, com renderização de gráficos 3D delegada inteiramente à GPU via React Three Fiber.
+- **Estética "Wow!" (Mira 3D)**: Implementação de TailwindCSS v4 com variáveis customizadas para glassmorphism profundo, aliado a topologias matemáticas e simulações em **WebGL/Three.js** para representar os fluxos de dados de forma imersiva e performática.
+- **Autoridade Técnica Pura**: Apresentação visual da *Engineering Stack* (LangChain, Pinecone, Airflow, Next.js) e documentação de metodologias de Governança (Zero Trust, LLM Tracing com LangSmith, CI/CD de Prompts).
 - **SEO Otimizado**: Semântica HTML rigorosa e meta-tags voltadas para captura orgânica dos termos "Infraestrutura LLMOps", "Múltiplos Agentes" e "AI-First".
-- **Acessibilidade & Responsividade**: O site deve renderizar com perfeição desde dispositivos móveis (Mobile-First approach) até monitores Ultrawide.
+- **Acessibilidade & Responsividade**: O site deve renderizar com perfeição desde dispositivos móveis (Mobile-First approach) até monitores Ultrawide, desativando componentes 3D pesados em dispositivos de baixo desempenho, se necessário.
 
 ## 5. Casos de Uso Core
 
