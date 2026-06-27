@@ -2,138 +2,16 @@
 
 import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
-import * as d3 from "d3";
 import { 
   ArrowRight, Bot, Code, Server, Zap, CheckCircle2, 
   Scale, GraduationCap, Building2, Database, Workflow, 
   LineChart, Lock, MessageCircle, Linkedin, ChevronDown, ChevronUp, AlertTriangle, Sparkles, X, Check 
 } from "lucide-react";
 import { ChatWidget } from "@/components/ChatWidget";
-
-// --- D3 Animations Hooks ---
-
-function useCapaParticles() {
-  const stageRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!stageRef.current) return;
-    const stage = stageRef.current;
-    stage.innerHTML = "";
-    
-    const W = stage.clientWidth;
-    const H = stage.clientHeight;
-    
-    const svg = d3.select(stage).append('svg')
-      .attr('viewBox', `0 0 ${W} ${H}`)
-      .attr('width', '100%')
-      .attr('height', '100%');
-      
-    const cx = W / 2, cy = H / 2;
-    const numParticles = 40;
-    const particles = d3.range(numParticles).map(() => ({
-        r: 250 + Math.random() * Math.min(W, H) * 0.4,
-        angle: Math.random() * Math.PI * 2,
-        speed: 0.001 + Math.random() * 0.003,
-        size: 1 + Math.random() * 3
-    }));
-    
-    const PRIMARY = getComputedStyle(document.documentElement).getPropertyValue('--mira-primary').trim() || "#3b82f6";
-    
-    const dots = svg.selectAll('circle').data(particles).join('circle')
-        .attr('r', d => d.size).attr('fill', PRIMARY).attr('opacity', 0.5);
-    
-    const timer = d3.timer(() => {
-        dots.attr('cx', d => { d.angle += d.speed; return cx + Math.cos(d.angle) * d.r; })
-            .attr('cy', d => cy + Math.sin(d.angle) * d.r * 0.5);
-    });
-
-    return () => timer.stop();
-  }, []);
-
-  return stageRef;
-}
-
-function useFluxoAnimation(colorPrimary: string, colorSecondary: string) {
-  const stageRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!stageRef.current) return;
-    const stage = stageRef.current;
-    stage.innerHTML = "";
-
-    const W = 1000, H = 300;
-    const svg = d3.select(stage).append('svg')
-      .attr('viewBox', `0 0 ${W} ${H}`)
-      .attr('width', '100%')
-      .attr('height', '100%');
-    
-    const hubs = [
-        {x: 200, y: H/2, label: "Ingestão & RAG", color: colorPrimary},
-        {x: 500, y: H/2, label: "Processamento LLM", color: colorSecondary},
-        {x: 800, y: H/2 - 60, label: "Aplicação Final 1", color: colorPrimary},
-        {x: 800, y: H/2 + 60, label: "Analytics / BI", color: colorSecondary} 
-    ];
-
-    svg.append('path').attr('d', `M 200 ${H/2} L 500 ${H/2}`).attr('stroke', 'rgba(255,255,255,0.15)').attr('stroke-width', 2).attr('fill', 'none');
-    svg.append('path').attr('d', `M 500 ${H/2} L 800 ${H/2 - 60}`).attr('stroke', 'rgba(255,255,255,0.15)').attr('stroke-width', 2).attr('fill', 'none');
-    svg.append('path').attr('d', `M 500 ${H/2} L 800 ${H/2 + 60}`).attr('stroke', 'rgba(255,255,255,0.15)').attr('stroke-width', 2).attr('fill', 'none');
-
-    const nodes = svg.selectAll('g.hub').data(hubs).join('g').attr('transform', d => `translate(${d.x},${d.y})`);
-    nodes.append('circle').attr('r', 40).attr('fill', d => d.color).attr('opacity', 0.1).attr('stroke', d => d.color).attr('stroke-width', 2);
-    nodes.append('circle').attr('r', 40).attr('fill', 'none').attr('stroke', d => d.color).attr('stroke-width', 1).style('filter', 'blur(4px)');
-    
-    let particleTimeouts: NodeJS.Timeout[] = [];
-
-    function sendParticle(pathDef: string, color: string) {
-        if (!stageRef.current) return;
-        const pathNode = svg.append('path').attr('d', pathDef).style('display', 'none').node();
-        if (!pathNode) return;
-        const particle = svg.append('circle').attr('r', 5).attr('fill', color).style('filter', `drop-shadow(0 0 6px ${color})`);
-        
-        particle.transition().duration(2000).ease(d3.easeCubicInOut)
-            .attrTween('transform', function() {
-                const l = pathNode.getTotalLength();
-                return function(t) {
-                    const p = pathNode.getPointAtLength(t * l);
-                    return `translate(${p.x},${p.y})`;
-                };
-            })
-            .on('end', () => {
-                particle.remove();
-                d3.select(pathNode).remove();
-                if (stageRef.current) {
-                  const t = setTimeout(() => sendParticle(pathDef, color), Math.random() * 1000 + 500);
-                  particleTimeouts.push(t);
-                }
-            });
-    }
-
-    sendParticle(`M 200 ${H/2} L 500 ${H/2}`, colorPrimary);
-    const t1 = setTimeout(() => sendParticle(`M 200 ${H/2} L 500 ${H/2}`, colorPrimary), 1000);
-    sendParticle(`M 500 ${H/2} L 800 ${H/2 - 60}`, colorPrimary);
-    sendParticle(`M 500 ${H/2} L 800 ${H/2 + 60}`, colorSecondary);
-    particleTimeouts.push(t1);
-
-    const pulseInterval = setInterval(() => {
-        nodes.select('circle').transition().duration(800).attr('r', 45).attr('opacity', 0.2)
-            .transition().duration(800).attr('r', 40).attr('opacity', 0.1);
-    }, 1600);
-
-    return () => {
-      clearInterval(pulseInterval);
-      particleTimeouts.forEach(clearTimeout);
-    };
-  }, [colorPrimary, colorSecondary]);
-
-  return stageRef;
-}
+import Capa3D from "@/components/Capa3D";
+import Network3D from "@/components/Network3D";
 
 export default function Home() {
-  const capaStageRef = useCapaParticles();
-  const fluxoLegalRef = useFluxoAnimation("#3b82f6", "#3b82f6"); // Blue
-  const fluxoB2BRef = useFluxoAnimation("#10b981", "#10b981"); // Green
-  const fluxoEduRef = useFluxoAnimation("#8b5cf6", "#8b5cf6"); // Violet
-
   const [scrollProgress, setScrollProgress] = useState(0);
   const [atBottom, setAtBottom] = useState(false);
   const [showNext, setShowNext] = useState(false);
@@ -209,7 +87,7 @@ export default function Home() {
 
       {/* SLIDE 1: CAPA */}
       <section ref={el => {sectionsRef.current[0] = el}} className="min-h-screen flex flex-col items-center justify-center relative overflow-hidden px-6">
-        <div ref={capaStageRef} className="absolute inset-0 pointer-events-none z-0" />
+        <Capa3D />
         <motion.div 
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -406,9 +284,11 @@ export default function Home() {
           initial={{ opacity: 0, scale: 0.95 }}
           whileInView={{ opacity: 1, scale: 1 }}
           viewport={{ once: true }}
-          className="mira-glass-card w-full max-w-5xl p-8 relative"
+          className="mira-glass-card w-full max-w-5xl p-8 relative overflow-hidden"
         >
-            <div ref={fluxoLegalRef} className="mira-anim-stage" style={{aspectRatio: '21/9'}}></div>
+            <div className="mira-anim-stage" style={{aspectRatio: '21/9'}}>
+              <Network3D colorPrimary="#3b82f6" colorSecondary="#8b5cf6" />
+            </div>
         </motion.div>
       </section>
 
@@ -431,9 +311,11 @@ export default function Home() {
           initial={{ opacity: 0, scale: 0.95 }}
           whileInView={{ opacity: 1, scale: 1 }}
           viewport={{ once: true }}
-          className="mira-glass-card w-full max-w-5xl p-8 relative"
+          className="mira-glass-card w-full max-w-5xl p-8 relative overflow-hidden"
         >
-            <div ref={fluxoB2BRef} className="mira-anim-stage" style={{aspectRatio: '21/9'}}></div>
+            <div className="mira-anim-stage" style={{aspectRatio: '21/9'}}>
+              <Network3D colorPrimary="#10b981" colorSecondary="#3b82f6" />
+            </div>
         </motion.div>
       </section>
 
@@ -456,9 +338,11 @@ export default function Home() {
           initial={{ opacity: 0, scale: 0.95 }}
           whileInView={{ opacity: 1, scale: 1 }}
           viewport={{ once: true }}
-          className="mira-glass-card w-full max-w-5xl p-8 relative"
+          className="mira-glass-card w-full max-w-5xl p-8 relative overflow-hidden"
         >
-            <div ref={fluxoEduRef} className="mira-anim-stage" style={{aspectRatio: '21/9'}}></div>
+            <div className="mira-anim-stage" style={{aspectRatio: '21/9'}}>
+              <Network3D colorPrimary="#8b5cf6" colorSecondary="#10b981" />
+            </div>
         </motion.div>
       </section>
 
