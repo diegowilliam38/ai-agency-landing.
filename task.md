@@ -1,0 +1,5 @@
+- [/] Analisar requisitos visuais e aprovar a paleta de cores @ux
+- [/] Construir o componente de Hero Header @dev
+- [/] Configurar roteamento das páginas @dev
+- [ ] Validar a responsividade em dispositivos móveis @qa
+- [ ] Iniciar pipeline de deploy para Vercel @devops

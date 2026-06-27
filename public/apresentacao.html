@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mira — Innovate e Solve IA</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+    <style>
+        /* @MIRA:THEME:START */
+        :root {
+            --mira-primary: #3b82f6; /* Blue 500 */
+            --mira-accent-2: #8b5cf6; /* Violet 500 */
+            --mira-bg: #000000;
+            --mira-text: #ffffff;
+            --mira-text-soft: rgba(255, 255, 255, 0.70);
+            --mira-text-softer: rgba(255, 255, 255, 0.50);
+            --mira-card-bg: rgba(255, 255, 255, 0.03);
+            --mira-card-border: rgba(255, 255, 255, 0.10);
+            --mira-glow-soft: rgba(59, 130, 246, 0.10);
+            --mira-glow-strong: rgba(139, 92, 246, 0.20);
+            --mira-icon-bg: rgba(59, 130, 246, 0.15);
+            --mira-icon-border: rgba(59, 130, 246, 0.30);
+            --mira-pill-bg: rgba(255, 255, 255, 0.05);
+            --mira-pill-border: rgba(255, 255, 255, 0.10);
+            --mira-stage-glow: rgba(59, 130, 246, 0.08);
+        }
+
+        body {
+            background: var(--mira-bg);
+            min-height: 100vh;
+            color: var(--mira-text);
+            font-family: 'Inter', sans-serif;
+        }
+
+        .primary-color { color: var(--mira-primary); }
+        .primary-bg { background: var(--mira-primary); }
+        .gradient-text {
+            background: linear-gradient(to right, var(--mira-primary), var(--mira-accent-2));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .glass-card {
+            background: var(--mira-card-bg);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--mira-card-border);
+            box-shadow: 0 10px 30px var(--mira-glow-soft);
+            transition: all 0.3s ease;
+            border-radius: 1rem;
+        }
+
+        .glass-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 40px var(--mira-glow-strong);
+        }
+
+        .icon-hero {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            flex: 0 0 auto;
+            align-items: center;
+            justify-content: center;
+            background: var(--mira-icon-bg);
+            border: 1px solid var(--mira-icon-border);
+        }
+
+        .attribute-pill {
+            background: var(--mira-pill-bg);
+            border: 1px solid var(--mira-pill-border);
+            transition: all 0.25s ease;
+            border-radius: 9999px;
+        }
+
+        .attribute-pill:hover {
+            background: var(--mira-icon-bg);
+            border-color: var(--mira-icon-border);
+            transform: translateY(-3px);
+        }
+
+        .anim-stage {
+            width: 100%;
+            aspect-ratio: 16 / 9;
+            background: radial-gradient(circle at 50% 50%, var(--mira-stage-glow), transparent 70%);
+            border-radius: 12px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .anim-stage svg { display: block; width: 100%; height: 100%; }
+
+        .text-soft { color: var(--mira-text-soft); }
+        .text-softer { color: var(--mira-text-softer); }
+
+        @keyframes mira-pulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.08); opacity: 0.85; }
+        }
+        /* @MIRA:THEME:END */
+
+        html { scroll-behavior: smooth; }
+
+        #mira-progress {
+            position: fixed; top: 0; left: 0; height: 3px; width: 0%;
+            background: linear-gradient(90deg, var(--mira-primary), var(--mira-accent-2), var(--mira-primary));
+            background-size: 200% 100%;
+            animation: mira-shimmer 2s linear infinite;
+            z-index: 9999; transition: width 0.1s linear;
+        }
+
+        @keyframes mira-shimmer {
+            0% { background-position: -200% center; }
+            100% { background-position: 200% center; }
+        }
+
+        #mira-next {
+            position: fixed; bottom: 32px; right: 32px;
+            width: 48px; height: 48px; border-radius: 50%;
+            background: var(--mira-primary); color: var(--mira-bg);
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; border: none;
+            opacity: 0; transform: translateY(20px);
+            transition: all 0.3s ease; z-index: 9998;
+        }
+        #mira-next.visible { opacity: 1; transform: translateY(0); }
+        #mira-next:hover { transform: translateY(-3px) scale(1.1); }
+    </style>
+</head>
+
+<body>
+    <div id="mira-progress"></div>
+    <button id="mira-next" aria-label="Próximo slide"><i data-lucide="chevron-down" class="w-6 h-6" id="mira-next-icon"></i></button>
+
+    <!-- SLIDE 1: CAPA -->
+    <section class="min-h-screen flex flex-col items-center justify-center relative overflow-hidden px-6">
+        <div id="capa-stage" class="absolute inset-0 pointer-events-none"></div>
+        <div class="relative z-10 text-center max-w-4xl" data-aos="fade-up">
+            <p class="attribute-pill inline-block px-5 py-2 text-sm tracking-widest uppercase primary-color mb-8">
+                <i data-lucide="zap" class="w-4 h-4 inline mr-2"></i>O Futuro da Automação Chegou
+            </p>
+            <h1 class="text-5xl md:text-7xl font-black leading-tight mb-6">
+                Sua Empresa, <br>
+                <span class="gradient-text">Transformada em AI-First.</span>
+            </h1>
+            <p class="text-xl text-soft max-w-2xl mx-auto mb-10">
+                Não perca tempo com automações rasas. Nós construímos a Infraestrutura de IA completa e implementamos Squads Autônomos que escalam a produtividade da sua empresa.
+            </p>
+            <div class="flex items-center justify-center gap-3 text-softer text-sm">
+                <i data-lucide="shield" class="w-4 h-4 primary-color"></i> Zero Trust Architecture
+                <span class="opacity-40">|</span>
+                <i data-lucide="database" class="w-4 h-4 primary-color"></i> Data Pipelines
+            </div>
+        </div>
+    </section>
+
+    <!-- SLIDE 2: PROBLEMA VS SOLUÇÃO -->
+    <section class="min-h-screen flex flex-col items-center justify-center px-6 py-16">
+        <div class="text-center mb-12" data-aos="fade-up">
+            <h2 class="text-4xl md:text-5xl font-black">Caos Operacional <span class="primary-color">vs</span> Escala AI-First</h2>
+            <p class="text-soft text-lg mt-3">Sua operação manual está vazando dinheiro.</p>
+        </div>
+        <div class="grid md:grid-cols-2 gap-8 w-full max-w-5xl items-stretch">
+            <div id="versus-a" class="glass-card p-10 transition-all duration-700" data-aos="fade-right">
+                <div class="icon-hero mb-6 bg-red-900/20 border-red-500/30"><i data-lucide="alert-triangle" class="text-red-500 w-6 h-6"></i></div>
+                <h3 class="text-3xl font-bold mb-4">O problema</h3>
+                <ul class="space-y-4 text-soft">
+                    <li class="flex gap-3"><i data-lucide="x" class="text-red-500 w-5 h-5 shrink-0"></i> Processos dependentes de pessoas para tarefas repetitivas.</li>
+                    <li class="flex gap-3"><i data-lucide="x" class="text-red-500 w-5 h-5 shrink-0"></i> Leads esfriando por falta de qualificação instantânea.</li>
+                    <li class="flex gap-3"><i data-lucide="x" class="text-red-500 w-5 h-5 shrink-0"></i> Silos de dados que impedem visão 360º do negócio.</li>
+                </ul>
+            </div>
+            <div id="versus-b" class="glass-card p-10 transition-all duration-700" data-aos="fade-left">
+                <div class="icon-hero mb-6"><i data-lucide="sparkles" class="primary-color w-6 h-6"></i></div>
+                <h3 class="text-3xl font-bold mb-4">A solução</h3>
+                <ul class="space-y-4 text-soft">
+                    <li class="flex gap-3"><i data-lucide="check" class="primary-color w-5 h-5 shrink-0"></i> Squads autônomos resolvendo gargalos 24/7.</li>
+                    <li class="flex gap-3"><i data-lucide="check" class="primary-color w-5 h-5 shrink-0"></i> Qualificação em tempo real integrada ao CRM.</li>
+                    <li class="flex gap-3"><i data-lucide="check" class="primary-color w-5 h-5 shrink-0"></i> Data Pipelines e Analytics operacionais em tempo real.</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <!-- SLIDE 3: A JORNADA AI-FIRST -->
+    <section class="min-h-screen flex flex-col items-center justify-center px-6 py-16">
+        <div class="text-center mb-14" data-aos="fade-up">
+            <h2 class="text-4xl md:text-5xl font-black">A Jornada AI-First</h2>
+            <p class="text-soft text-lg mt-3">Escalando com Inteligência Artificial no centro de todas as decisões.</p>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8 w-full max-w-6xl">
+            <div class="glass-card p-8 relative overflow-hidden" data-aos="zoom-in">
+                <div class="icon-hero mb-6"><i data-lucide="bot" class="primary-color w-6 h-6"></i></div>
+                <h3 class="text-xl font-bold mb-3">Squads Autônomos</h3>
+                <p class="text-sm text-soft mb-6">Não é apenas um chatbot. Implantamos ecossistemas onde agentes especialistas trabalham juntos.</p>
+                <ul class="space-y-2">
+                    <li class="flex items-center gap-2 text-sm text-softer"><i data-lucide="check-circle-2" class="w-4 h-4 primary-color"></i> Decisão Multi-Agent</li>
+                    <li class="flex items-center gap-2 text-sm text-softer"><i data-lucide="check-circle-2" class="w-4 h-4 primary-color"></i> Operação 24/7</li>
+                </ul>
+            </div>
+            <div class="glass-card p-8 relative overflow-hidden" data-aos="zoom-in" data-aos-delay="150">
+                <div class="icon-hero mb-6 bg-violet-900/20 border-violet-500/30"><i data-lucide="code" class="text-violet-400 w-6 h-6"></i></div>
+                <h3 class="text-xl font-bold mb-3">Aplicações Web</h3>
+                <p class="text-sm text-soft mb-6">Sites de alta performance projetados para conversão com arquitetura Next.js Premium.</p>
+                <ul class="space-y-2">
+                    <li class="flex items-center gap-2 text-sm text-softer"><i data-lucide="check-circle-2" class="w-4 h-4 text-violet-400"></i> Alta Conversão</li>
+                    <li class="flex items-center gap-2 text-sm text-softer"><i data-lucide="check-circle-2" class="w-4 h-4 text-violet-400"></i> SSR e SEO Otimizado</li>
+                </ul>
+            </div>
+            <div class="glass-card p-8 relative overflow-hidden" data-aos="zoom-in" data-aos-delay="300">
+                <div class="icon-hero mb-6 bg-green-900/20 border-green-500/30"><i data-lucide="server" class="text-green-400 w-6 h-6"></i></div>
+                <h3 class="text-xl font-bold mb-3">Infraestrutura LLMOps</h3>
+                <p class="text-sm text-soft mb-6">Engenharia de dados e LLMs com conformidade total e segurança de ponta.</p>
+                <ul class="space-y-2">
+                    <li class="flex items-center gap-2 text-sm text-softer"><i data-lucide="check-circle-2" class="w-4 h-4 text-green-400"></i> Governança (LGPD)</li>
+                    <li class="flex items-center gap-2 text-sm text-softer"><i data-lucide="check-circle-2" class="w-4 h-4 text-green-400"></i> Escalabilidade</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <!-- SLIDE 4: OS NICHOS COMPLEXOS (FLUXO / D3) -->
+    <section class="min-h-screen flex flex-col items-center justify-center px-6 py-16">
+        <div class="text-center mb-10" data-aos="fade-up">
+            <h2 class="text-4xl md:text-5xl font-black">AI-First OS: Dominamos Setores Complexos</h2>
+            <p class="text-soft text-lg mt-3">Jurídico (LegalTech) · Educação (EdTech) · Negócios (B2B)</p>
+        </div>
+        <div class="glass-card w-full max-w-5xl p-8 relative" data-aos="fade-up">
+            <!-- Palco para a animação D3 do Fluxo -->
+            <div id="fluxo-stage" class="anim-stage" style="aspect-ratio: 21/9;"></div>
+        </div>
+    </section>
+
+    <!-- SLIDE 5: CTA -->
+    <section class="min-h-screen flex flex-col items-center justify-center relative overflow-hidden px-6">
+        <div class="cta-breathe absolute inset-0 pointer-events-none"></div>
+        <div class="relative z-10 text-center max-w-3xl" data-aos="zoom-in">
+            <div class="icon-hero mx-auto mb-8" style="width:72px;height:72px;border-radius:20px;">
+                <i data-lucide="zap" class="primary-color w-9 h-9"></i>
+            </div>
+            <h2 class="text-5xl md:text-6xl font-black mb-6">Pronto para a Evolução?</h2>
+            <p class="text-xl text-soft mb-10">Agende uma demonstração e descubra como uma infraestrutura LLMOps estruturada pode escalar sua empresa.</p>
+            <div class="flex flex-wrap items-center justify-center gap-4">
+                <a href="https://wa.me/5598988646888" target="_blank" class="attribute-pill px-8 py-4 text-base font-bold bg-blue-600 hover:bg-blue-700 text-white border-0 transition-all shadow-lg hover:shadow-blue-500/50">
+                    <i data-lucide="message-circle" class="inline w-5 h-5 mr-2"></i> Iniciar Projeto
+                </a>
+            </div>
+            <p class="text-softer mt-12 text-sm tracking-widest uppercase">Innovate e Solve IA © 2026</p>
+        </div>
+        <style>
+            .cta-breathe {
+                background: radial-gradient(ellipse at 50% 60%, var(--mira-glow-strong), transparent 65%);
+                animation: mira-pulse 4s ease-in-out infinite;
+            }
+        </style>
+    </section>
+
+    <script>
+        AOS.init({ duration: 800, once: true });
+        lucide.createIcons();
+        
+        const PRIMARY = getComputedStyle(document.documentElement).getPropertyValue('--mira-primary').trim();
+        const VIOLET = getComputedStyle(document.documentElement).getPropertyValue('--mira-accent-2').trim();
+
+        // 1. CAPA: Partículas conectadas
+        (function () {
+            const W = window.innerWidth, H = window.innerHeight;
+            const svg = d3.select('#capa-stage').append('svg').attr('viewBox', `0 0 ${W} ${H}`);
+            const cx = W / 2, cy = H / 2;
+            const numParticles = 30;
+            const particles = d3.range(numParticles).map(() => ({
+                r: 250 + Math.random() * Math.min(W, H) * 0.4,
+                angle: Math.random() * Math.PI * 2,
+                speed: 0.001 + Math.random() * 0.003,
+                size: 1 + Math.random() * 3
+            }));
+            
+            const dots = svg.selectAll('circle').data(particles).join('circle')
+                .attr('r', d => d.size).attr('fill', PRIMARY).attr('opacity', 0.5);
+            
+            d3.timer(() => {
+                dots.attr('cx', d => { d.angle += d.speed; return cx + Math.cos(d.angle) * d.r; })
+                    .attr('cy', d => cy + Math.sin(d.angle) * d.r * 0.5);
+            });
+        })();
+
+        // 2. VERSUS: Spotlight
+        (function () {
+            const a = document.getElementById('versus-a');
+            const b = document.getElementById('versus-b');
+            let turn = true;
+            setInterval(() => {
+                const on = turn ? a : b, off = turn ? b : a;
+                on.style.transform = 'translateY(-8px) scale(1.02)';
+                on.style.boxShadow = '0 20px 50px var(--mira-glow-strong)';
+                off.style.transform = 'none';
+                off.style.boxShadow = '0 10px 30px var(--mira-card-border)';
+                turn = !turn;
+            }, 3000);
+        })();
+
+        // 3. FLUXO: Animação D3 de dados conectando módulos de nicho
+        (function () {
+            const W = 1000, H = 300;
+            const svg = d3.select('#fluxo-stage').append('svg').attr('viewBox', `0 0 ${W} ${H}`);
+            
+            const hubs = [
+                {x: 200, y: H/2, label: "Ingestão & RAG", color: PRIMARY, icon: "Database"},
+                {x: 500, y: H/2, label: "Processamento LLM", color: VIOLET, icon: "Brain"},
+                {x: 800, y: H/2 - 60, label: "Cockpit Jurídico", color: PRIMARY, icon: "Scale"},
+                {x: 800, y: H/2 + 60, label: "B2B Revenue", color: "#10b981", icon: "Chart"} // Green
+            ];
+
+            // Conexões
+            svg.append('path').attr('d', `M 200 ${H/2} L 500 ${H/2}`).attr('stroke', 'rgba(255,255,255,0.15)').attr('stroke-width', 2).attr('fill', 'none');
+            svg.append('path').attr('d', `M 500 ${H/2} L 800 ${H/2 - 60}`).attr('stroke', 'rgba(255,255,255,0.15)').attr('stroke-width', 2).attr('fill', 'none');
+            svg.append('path').attr('d', `M 500 ${H/2} L 800 ${H/2 + 60}`).attr('stroke', 'rgba(255,255,255,0.15)').attr('stroke-width', 2).attr('fill', 'none');
+
+            // Hubs
+            const nodes = svg.selectAll('g.hub').data(hubs).join('g').attr('transform', d => `translate(${d.x},${d.y})`);
+            nodes.append('circle').attr('r', 40).attr('fill', d => d.color).attr('opacity', 0.1).attr('stroke', d => d.color).attr('stroke-width', 2);
+            nodes.append('circle').attr('r', 40).attr('fill', 'none').attr('stroke', d => d.color).attr('stroke-width', 1).style('filter', 'blur(4px)');
+            nodes.append('text').text(d => d.label).attr('y', 65).attr('text-anchor', 'middle').attr('fill', 'rgba(255,255,255,0.8)').attr('font-size', 14);
+            
+            // Partículas
+            function sendParticle(pathDef, color) {
+                const pathNode = svg.append('path').attr('d', pathDef).style('display', 'none').node();
+                const particle = svg.append('circle').attr('r', 5).attr('fill', color).style('filter', `drop-shadow(0 0 6px ${color})`);
+                
+                particle.transition().duration(2000).ease(d3.easeCubicInOut)
+                    .attrTween('transform', function() {
+                        const l = pathNode.getTotalLength();
+                        return function(t) {
+                            const p = pathNode.getPointAtLength(t * l);
+                            return `translate(${p.x},${p.y})`;
+                        };
+                    })
+                    .on('end', () => {
+                        particle.remove();
+                        pathNode.remove();
+                        setTimeout(() => sendParticle(pathDef, color), Math.random() * 1000 + 500);
+                    });
+            }
+
+            // Iniciar fluxo
+            sendParticle(`M 200 ${H/2} L 500 ${H/2}`, PRIMARY);
+            setTimeout(() => sendParticle(`M 200 ${H/2} L 500 ${H/2}`, PRIMARY), 1000);
+            
+            sendParticle(`M 500 ${H/2} L 800 ${H/2 - 60}`, PRIMARY);
+            sendParticle(`M 500 ${H/2} L 800 ${H/2 + 60}`, "#10b981");
+
+            // Efeito pulsante contínuo nos hubs
+            setInterval(() => {
+                nodes.select('circle').transition().duration(800).attr('r', 45).attr('opacity', 0.2)
+                    .transition().duration(800).attr('r', 40).attr('opacity', 0.1);
+            }, 1600);
+        })();
+
+        // SCROLL & NAVEGAÇÃO
+        (function () {
+            const cardSections = Array.from(document.querySelectorAll('body > section'));
+            if (cardSections.length === 0) return;
+
+            const progress = document.getElementById('mira-progress');
+            const nextBtn = document.getElementById('mira-next');
+            const nextIcon = document.getElementById('mira-next-icon');
+
+            const atBottom = () => (window.scrollY + window.innerHeight) >= (document.documentElement.scrollHeight - 100);
+
+            function currentIndex() {
+                const y = window.scrollY + window.innerHeight * 0.3;
+                let idx = -1;
+                for (let i = 0; i < cardSections.length; i++) {
+                    if (cardSections[i].offsetTop <= y) idx = i;
+                }
+                return idx;
+            }
+
+            function goTo(i) {
+                const idx = Math.max(0, Math.min(cardSections.length - 1, i));
+                cardSections[idx].scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+
+            window.addEventListener('scroll', () => {
+                const docH = document.documentElement.scrollHeight - window.innerHeight;
+                progress.style.width = (docH > 0 ? (window.scrollY / docH) * 100 : 0) + '%';
+                nextBtn.classList.toggle('visible', window.scrollY > 300);
+                nextIcon.setAttribute('data-lucide', atBottom() ? 'chevron-up' : 'chevron-down');
+                lucide.createIcons();
+            });
+
+            nextBtn.addEventListener('click', () => {
+                if (atBottom()) { window.scrollTo({ top: 0, behavior: 'smooth' }); return; }
+                goTo(currentIndex() + 1);
+            });
+
+            document.addEventListener('keydown', (e) => {
+                if (['ArrowRight', 'ArrowDown', 'PageDown'].includes(e.key)) { e.preventDefault(); goTo(currentIndex() + 1); } 
+                else if (['ArrowLeft', 'ArrowUp', 'PageUp'].includes(e.key)) {
+                    e.preventDefault();
+                    const idx = currentIndex();
+                    if (idx <= 0) window.scrollTo({ top: 0, behavior: 'smooth' });
+                    else goTo(idx - 1);
+                }
+                else if (e.key.toLowerCase() === 'f') {
+                    if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+                    else document.exitFullscreen();
+                }
+            });
+        })();
+    </script>
+</body>
+</html>

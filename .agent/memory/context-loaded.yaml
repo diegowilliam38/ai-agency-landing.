@@ -1,0 +1,8 @@
+context_loaded:
+  global_rules:         "GEMINI.md @ AIOS-WORKSPACE — V5.10.1 — lido"
+  project_rules:        "GEMINI.md @ projects/ai-agency-landing — V1.0 — lido"
+  conflicts_identified: []         # Sem conflitos identificados
+  exceptions_active:               # Nenhuma exceção
+    - "nenhuma"
+  loaded_at: "2026-06-27 16:55"
+  loaded_by: "@sm"
