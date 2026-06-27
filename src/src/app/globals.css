@@ -18,10 +18,28 @@
   --color-foreground-muted: #a3a3a3;
   --color-border: #262626;
 
+  /* Mira Theme Variables */
+  --mira-primary: #3b82f6;
+  --mira-accent-2: #8b5cf6;
+  --mira-bg: #000000;
+  --mira-text: #ffffff;
+  --mira-text-soft: rgba(255, 255, 255, 0.70);
+  --mira-text-softer: rgba(255, 255, 255, 0.50);
+  --mira-card-bg: rgba(255, 255, 255, 0.03);
+  --mira-card-border: rgba(255, 255, 255, 0.10);
+  --mira-glow-soft: rgba(59, 130, 246, 0.10);
+  --mira-glow-strong: rgba(139, 92, 246, 0.20);
+  --mira-icon-bg: rgba(59, 130, 246, 0.15);
+  --mira-icon-border: rgba(59, 130, 246, 0.30);
+  --mira-pill-bg: rgba(255, 255, 255, 0.05);
+  --mira-pill-border: rgba(255, 255, 255, 0.10);
+  --mira-stage-glow: rgba(59, 130, 246, 0.08);
+
   /* Custom animations */
   --animate-fade-in: fade-in 0.5s ease-out;
   --animate-fade-up: fade-up 0.5s ease-out forwards;
   --animate-float: float 6s ease-in-out infinite;
+  --animate-mira-pulse: mira-pulse 4s ease-in-out infinite;
 
   @keyframes fade-in {
     from { opacity: 0; }
@@ -37,6 +55,11 @@
     0% { transform: translateY(0px); }
     50% { transform: translateY(-10px); }
     100% { transform: translateY(0px); }
+  }
+
+  @keyframes mira-pulse {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.08); opacity: 0.85; }
   }
 }
 
@@ -63,4 +86,56 @@
   .text-gradient {
     @apply bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-violet-500;
   }
+
+  /* Mira Classes */
+  .mira-primary-color { color: var(--mira-primary); }
+  .mira-gradient-text {
+    background: linear-gradient(to right, var(--mira-primary), var(--mira-accent-2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .mira-glass-card {
+    background: var(--mira-card-bg);
+    backdrop-filter: blur(12px);
+    border: 1px solid var(--mira-card-border);
+    box-shadow: 0 10px 30px var(--mira-glow-soft);
+    transition: all 0.3s ease;
+    border-radius: 1rem;
+  }
+  .mira-glass-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 20px 40px var(--mira-glow-strong);
+  }
+  .mira-icon-hero {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: center;
+    background: var(--mira-icon-bg);
+    border: 1px solid var(--mira-icon-border);
+  }
+  .mira-attribute-pill {
+    background: var(--mira-pill-bg);
+    border: 1px solid var(--mira-pill-border);
+    transition: all 0.25s ease;
+    border-radius: 9999px;
+  }
+  .mira-attribute-pill:hover {
+    background: var(--mira-icon-bg);
+    border-color: var(--mira-icon-border);
+    transform: translateY(-3px);
+  }
+  .mira-anim-stage {
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    background: radial-gradient(circle at 50% 50%, var(--mira-stage-glow), transparent 70%);
+    border-radius: 12px;
+    overflow: hidden;
+    position: relative;
+  }
+  .mira-text-soft { color: var(--mira-text-soft); }
+  .mira-text-softer { color: var(--mira-text-softer); }
 }

@@ -1,442 +1,497 @@
 "use client";
 
+import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
-import { ArrowRight, Bot, Code, Server, Zap, CheckCircle2, Scale, GraduationCap, Building2, Database, Workflow, LineChart, Lock, MessageCircle, Linkedin } from "lucide-react";
+import * as d3 from "d3";
+import { 
+  ArrowRight, Bot, Code, Server, Zap, CheckCircle2, 
+  Scale, GraduationCap, Building2, Database, Workflow, 
+  LineChart, Lock, MessageCircle, Linkedin, ChevronDown, ChevronUp, AlertTriangle, Sparkles, X, Check 
+} from "lucide-react";
 import { ChatWidget } from "@/components/ChatWidget";
 
+// --- D3 Animations Hooks ---
+
+function useCapaParticles() {
+  const stageRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!stageRef.current) return;
+    const stage = stageRef.current;
+    stage.innerHTML = "";
+    
+    const W = stage.clientWidth;
+    const H = stage.clientHeight;
+    
+    const svg = d3.select(stage).append('svg')
+      .attr('viewBox', `0 0 ${W} ${H}`)
+      .attr('width', '100%')
+      .attr('height', '100%');
+      
+    const cx = W / 2, cy = H / 2;
+    const numParticles = 40;
+    const particles = d3.range(numParticles).map(() => ({
+        r: 250 + Math.random() * Math.min(W, H) * 0.4,
+        angle: Math.random() * Math.PI * 2,
+        speed: 0.001 + Math.random() * 0.003,
+        size: 1 + Math.random() * 3
+    }));
+    
+    const PRIMARY = getComputedStyle(document.documentElement).getPropertyValue('--mira-primary').trim() || "#3b82f6";
+    
+    const dots = svg.selectAll('circle').data(particles).join('circle')
+        .attr('r', d => d.size).attr('fill', PRIMARY).attr('opacity', 0.5);
+    
+    const timer = d3.timer(() => {
+        dots.attr('cx', d => { d.angle += d.speed; return cx + Math.cos(d.angle) * d.r; })
+            .attr('cy', d => cy + Math.sin(d.angle) * d.r * 0.5);
+    });
+
+    return () => timer.stop();
+  }, []);
+
+  return stageRef;
+}
+
+function useFluxoAnimation(colorPrimary: string, colorSecondary: string) {
+  const stageRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!stageRef.current) return;
+    const stage = stageRef.current;
+    stage.innerHTML = "";
+
+    const W = 1000, H = 300;
+    const svg = d3.select(stage).append('svg')
+      .attr('viewBox', `0 0 ${W} ${H}`)
+      .attr('width', '100%')
+      .attr('height', '100%');
+    
+    const hubs = [
+        {x: 200, y: H/2, label: "Ingestão & RAG", color: colorPrimary},
+        {x: 500, y: H/2, label: "Processamento LLM", color: colorSecondary},
+        {x: 800, y: H/2 - 60, label: "Aplicação Final 1", color: colorPrimary},
+        {x: 800, y: H/2 + 60, label: "Analytics / BI", color: colorSecondary} 
+    ];
+
+    svg.append('path').attr('d', `M 200 ${H/2} L 500 ${H/2}`).attr('stroke', 'rgba(255,255,255,0.15)').attr('stroke-width', 2).attr('fill', 'none');
+    svg.append('path').attr('d', `M 500 ${H/2} L 800 ${H/2 - 60}`).attr('stroke', 'rgba(255,255,255,0.15)').attr('stroke-width', 2).attr('fill', 'none');
+    svg.append('path').attr('d', `M 500 ${H/2} L 800 ${H/2 + 60}`).attr('stroke', 'rgba(255,255,255,0.15)').attr('stroke-width', 2).attr('fill', 'none');
+
+    const nodes = svg.selectAll('g.hub').data(hubs).join('g').attr('transform', d => `translate(${d.x},${d.y})`);
+    nodes.append('circle').attr('r', 40).attr('fill', d => d.color).attr('opacity', 0.1).attr('stroke', d => d.color).attr('stroke-width', 2);
+    nodes.append('circle').attr('r', 40).attr('fill', 'none').attr('stroke', d => d.color).attr('stroke-width', 1).style('filter', 'blur(4px)');
+    
+    let particleTimeouts: NodeJS.Timeout[] = [];
+
+    function sendParticle(pathDef: string, color: string) {
+        if (!stageRef.current) return;
+        const pathNode = svg.append('path').attr('d', pathDef).style('display', 'none').node();
+        if (!pathNode) return;
+        const particle = svg.append('circle').attr('r', 5).attr('fill', color).style('filter', `drop-shadow(0 0 6px ${color})`);
+        
+        particle.transition().duration(2000).ease(d3.easeCubicInOut)
+            .attrTween('transform', function() {
+                const l = pathNode.getTotalLength();
+                return function(t) {
+                    const p = pathNode.getPointAtLength(t * l);
+                    return `translate(${p.x},${p.y})`;
+                };
+            })
+            .on('end', () => {
+                particle.remove();
+                d3.select(pathNode).remove();
+                if (stageRef.current) {
+                  const t = setTimeout(() => sendParticle(pathDef, color), Math.random() * 1000 + 500);
+                  particleTimeouts.push(t);
+                }
+            });
+    }
+
+    sendParticle(`M 200 ${H/2} L 500 ${H/2}`, colorPrimary);
+    const t1 = setTimeout(() => sendParticle(`M 200 ${H/2} L 500 ${H/2}`, colorPrimary), 1000);
+    sendParticle(`M 500 ${H/2} L 800 ${H/2 - 60}`, colorPrimary);
+    sendParticle(`M 500 ${H/2} L 800 ${H/2 + 60}`, colorSecondary);
+    particleTimeouts.push(t1);
+
+    const pulseInterval = setInterval(() => {
+        nodes.select('circle').transition().duration(800).attr('r', 45).attr('opacity', 0.2)
+            .transition().duration(800).attr('r', 40).attr('opacity', 0.1);
+    }, 1600);
+
+    return () => {
+      clearInterval(pulseInterval);
+      particleTimeouts.forEach(clearTimeout);
+    };
+  }, [colorPrimary, colorSecondary]);
+
+  return stageRef;
+}
+
 export default function Home() {
+  const capaStageRef = useCapaParticles();
+  const fluxoLegalRef = useFluxoAnimation("#3b82f6", "#3b82f6"); // Blue
+  const fluxoB2BRef = useFluxoAnimation("#10b981", "#10b981"); // Green
+  const fluxoEduRef = useFluxoAnimation("#8b5cf6", "#8b5cf6"); // Violet
+
+  const [scrollProgress, setScrollProgress] = useState(0);
+  const [atBottom, setAtBottom] = useState(false);
+  const [showNext, setShowNext] = useState(false);
+  
+  const sectionsRef = useRef<(HTMLElement | null)[]>([]);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const docH = document.documentElement.scrollHeight - window.innerHeight;
+      const progress = docH > 0 ? (window.scrollY / docH) * 100 : 0;
+      setScrollProgress(progress);
+      setShowNext(window.scrollY > 300);
+      setAtBottom(window.scrollY + window.innerHeight >= document.documentElement.scrollHeight - 100);
+    };
+
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  const handleNextClick = () => {
+    if (atBottom) {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
+    const y = window.scrollY + window.innerHeight * 0.3;
+    let idx = -1;
+    for (let i = 0; i < sectionsRef.current.length; i++) {
+      if (sectionsRef.current[i] && sectionsRef.current[i]!.offsetTop <= y) {
+        idx = i;
+      }
+    }
+    const nextIdx = Math.max(0, Math.min(sectionsRef.current.length - 1, idx + 1));
+    sectionsRef.current[nextIdx]?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (['ArrowRight', 'ArrowDown', 'PageDown'].includes(e.key)) { 
+        e.preventDefault(); 
+        handleNextClick();
+      } 
+      else if (e.key.toLowerCase() === 'f') {
+          if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+          else document.exitFullscreen();
+      }
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  });
+
   return (
-    <main className="min-h-screen bg-black text-white selection:bg-blue-500/30 overflow-x-hidden">
-      {/* Background Glow Effects */}
-      <div className="fixed top-0 left-1/2 -translate-x-1/2 w-[800px] h-[500px] bg-blue-600/20 blur-[120px] rounded-full pointer-events-none -z-10" />
-      <div className="fixed bottom-0 right-0 w-[600px] h-[400px] bg-violet-600/15 blur-[100px] rounded-full pointer-events-none -z-10" />
+    <main className="bg-black text-white selection:bg-blue-500/30 font-sans">
+      
+      {/* Mira Progress Bar */}
+      <div 
+        className="fixed top-0 left-0 h-[3px] z-[9999] transition-all duration-100 linear"
+        style={{
+          width: `${scrollProgress}%`,
+          background: 'linear-gradient(90deg, var(--mira-primary), var(--mira-accent-2), var(--mira-primary))',
+          backgroundSize: '200% 100%',
+          animation: 'mira-shimmer 2s linear infinite'
+        }}
+      />
 
-      {/* Navigation */}
-      <nav className="fixed top-0 w-full z-50 border-b border-white/5 bg-black/50 backdrop-blur-md">
-        <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-          <div className="font-bold text-xl tracking-tighter">
-            Innovate e Solve <span className="text-blue-500">IA</span>
-          </div>
-          <div className="hidden md:flex items-center gap-8 text-sm font-medium text-gray-400">
-            <a href="#solucoes" className="hover:text-white transition-colors">Soluções</a>
-            <a href="#ecossistema" className="hover:text-white transition-colors">Ecossistema</a>
-            <a href="#sobre" className="hover:text-white transition-colors">Sobre Nós</a>
-          </div>
-          <a href="https://wa.me/5598988646888" target="_blank" rel="noopener noreferrer" className="px-5 py-2 text-sm font-medium bg-white text-black rounded-full hover:bg-gray-200 transition-colors flex items-center gap-2">
-            <MessageCircle className="w-4 h-4" /> Falar com Especialista
-          </a>
-        </div>
-      </nav>
+      {/* Mira Floating Next Button */}
+      <button 
+        onClick={handleNextClick}
+        className={`fixed bottom-8 right-8 w-12 h-12 rounded-full bg-blue-500 text-black flex items-center justify-center cursor-pointer border-none transition-all duration-300 z-[9998] hover:-translate-y-1 hover:scale-110 ${showNext ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-5 pointer-events-none'}`}
+        aria-label="Próximo slide"
+      >
+        {atBottom ? <ChevronUp className="w-6 h-6" /> : <ChevronDown className="w-6 h-6" />}
+      </button>
 
-      {/* Hero Section */}
-      <section className="relative pt-32 pb-20 md:pt-48 md:pb-32 px-6">
-        <div className="max-w-4xl mx-auto text-center">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-white/10 bg-white/5 text-xs font-medium text-blue-400 mb-8"
-          >
-            <Zap className="w-3 h-3" />
-            <span>O Futuro da Automação Chegou</span>
-          </motion.div>
-
-          <motion.h1
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.1 }}
-            className="text-5xl md:text-7xl font-bold tracking-tight mb-6"
-          >
-            Sua Empresa, <br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-violet-500">
-              Transformada em AI-First.
-            </span>
-          </motion.h1>
-
-          <motion.p
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.2 }}
-            className="text-lg md:text-xl text-gray-400 mb-10 max-w-2xl mx-auto leading-relaxed"
-          >
-            Não perca tempo com automações rasas. Nós construímos a Infraestrutura de IA completa e implementamos Squads Autônomos que escalam a produtividade da sua empresa de ponta a ponta.
-          </motion.p>
-
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.3 }}
-            className="flex flex-col sm:flex-row items-center justify-center gap-4"
-          >
-            <a href="https://wa.me/5598988646888" target="_blank" rel="noopener noreferrer" className="w-full sm:w-auto px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-full font-medium transition-all hover:scale-105 flex items-center justify-center gap-2">
-              <MessageCircle className="w-5 h-5" /> Iniciar Projeto
-            </a>
-            <a href="#solucoes" className="w-full sm:w-auto px-8 py-4 bg-white/5 hover:bg-white/10 text-white border border-white/10 rounded-full font-medium transition-all flex items-center justify-center gap-2">
-              Ver Soluções <ArrowRight className="w-4 h-4" />
-            </a>
-          </motion.div>
-        </div>
-      </section>
-
-      {/* Pain Points Section (Cost of Inaction) */}
-      <section className="py-24 px-6 bg-black relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-red-900/10 blur-[100px] rounded-full pointer-events-none -z-10" />
-        <div className="max-w-7xl mx-auto grid md:grid-cols-2 gap-12 items-center">
-          <div>
-            <h2 className="text-3xl md:text-5xl font-bold mb-6">
-              Sua operação manual está <span className="text-red-500">vazando dinheiro.</span>
-            </h2>
-            <p className="text-gray-400 text-lg mb-8">
-              Atendimento lento deixa dinheiro na mesa. Equipes sobrecarregadas apagam incêndios em vez de focar no estratégico. Pilotar a empresa no "achismo" custa caro.
+      {/* SLIDE 1: CAPA */}
+      <section ref={el => {sectionsRef.current[0] = el}} className="min-h-screen flex flex-col items-center justify-center relative overflow-hidden px-6">
+        <div ref={capaStageRef} className="absolute inset-0 pointer-events-none z-0" />
+        <motion.div 
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.8 }}
+          className="relative z-10 text-center max-w-4xl"
+        >
+            <p className="mira-attribute-pill inline-flex items-center px-5 py-2 text-sm tracking-widest uppercase mira-primary-color mb-8">
+                <Zap className="w-4 h-4 mr-2" /> O Futuro da Automação Chegou
             </p>
-            <ul className="space-y-4">
-              {[
-                'Processos dependentes de pessoas para tarefas repetitivas.',
-                'Leads esfriando por falta de qualificação instantânea.',
-                'Silos de dados que impedem visão 360º do negócio.'
-              ].map((item, i) => (
-                <li key={i} className="flex items-start gap-3 text-gray-300">
-                  <span className="mt-1 text-red-500 font-bold">✕</span> {item}
-                </li>
-              ))}
-            </ul>
-          </div>
-          <div className="glass-card p-8 rounded-3xl border border-red-500/10 bg-red-500/5">
-            <h3 className="text-xl font-bold mb-4 text-white">Não vendemos Chatbots. Construímos Operações.</h3>
-            <p className="text-gray-400 text-sm leading-relaxed mb-6">
-              A diferença entre um bot tradicional e um ecossistema AI-First é estrutural. Nós mapeamos seus gargalos comerciais e operacionais, criando pipelines de dados que transformam sua empresa.
+            <h1 className="text-5xl md:text-7xl font-black leading-tight mb-6">
+                Sua Empresa, <br />
+                <span className="mira-gradient-text">Transformada em AI-First.</span>
+            </h1>
+            <p className="text-xl mira-text-soft max-w-2xl mx-auto mb-10">
+                Não perca tempo com automações rasas. Nós construímos a Infraestrutura de IA completa e implementamos Squads Autônomos que escalam a produtividade da sua empresa.
             </p>
-            <div className="flex items-center gap-4 text-sm font-medium text-white/80">
-              <div className="flex-1 p-4 rounded-xl bg-black/50 border border-white/5 text-center">
-                Caos Operacional
-              </div>
-              <ArrowRight className="text-blue-500" />
-              <div className="flex-1 p-4 rounded-xl bg-blue-500/10 border border-blue-500/20 text-blue-400 text-center">
-                Escala AI-First
-              </div>
+            <div className="flex items-center justify-center gap-3 mira-text-softer text-sm">
+                <Lock className="w-4 h-4 mira-primary-color" /> Zero Trust Architecture
+                <span className="opacity-40">|</span>
+                <Database className="w-4 h-4 mira-primary-color" /> Data Pipelines
             </div>
-          </div>
+        </motion.div>
+      </section>
+
+      {/* SLIDE 2: PROBLEMA VS SOLUÇÃO */}
+      <section ref={el => {sectionsRef.current[1] = el}} className="min-h-screen flex flex-col items-center justify-center px-6 py-16">
+        <motion.div 
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="text-center mb-12"
+        >
+            <h2 className="text-4xl md:text-5xl font-black">Caos Operacional <span className="mira-primary-color">vs</span> Escala AI-First</h2>
+            <p className="mira-text-soft text-lg mt-3">Sua operação manual está vazando dinheiro.</p>
+        </motion.div>
+        
+        <div className="grid md:grid-cols-2 gap-8 w-full max-w-5xl items-stretch">
+            <motion.div 
+              initial={{ opacity: 0, x: -30 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              className="mira-glass-card p-10 group hover:shadow-[0_20px_50px_rgba(239,68,68,0.15)]"
+            >
+                <div className="mira-icon-hero mb-6 bg-red-900/20 border-red-500/30"><AlertTriangle className="text-red-500 w-6 h-6" /></div>
+                <h3 className="text-3xl font-bold mb-4">O problema</h3>
+                <ul className="space-y-4 mira-text-soft">
+                    <li className="flex gap-3"><X className="text-red-500 w-5 h-5 shrink-0" /> Processos dependentes de pessoas para tarefas repetitivas.</li>
+                    <li className="flex gap-3"><X className="text-red-500 w-5 h-5 shrink-0" /> Leads esfriando por falta de qualificação instantânea.</li>
+                    <li className="flex gap-3"><X className="text-red-500 w-5 h-5 shrink-0" /> Silos de dados que impedem visão 360º do negócio.</li>
+                </ul>
+            </motion.div>
+            
+            <motion.div 
+              initial={{ opacity: 0, x: 30 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              className="mira-glass-card p-10 group hover:shadow-[0_20px_50px_var(--mira-glow-strong)]"
+            >
+                <div className="mira-icon-hero mb-6"><Sparkles className="mira-primary-color w-6 h-6" /></div>
+                <h3 className="text-3xl font-bold mb-4">A solução</h3>
+                <ul className="space-y-4 mira-text-soft">
+                    <li className="flex gap-3"><Check className="mira-primary-color w-5 h-5 shrink-0" /> Squads autônomos resolvendo gargalos 24/7.</li>
+                    <li className="flex gap-3"><Check className="mira-primary-color w-5 h-5 shrink-0" /> Qualificação em tempo real integrada ao CRM.</li>
+                    <li className="flex gap-3"><Check className="mira-primary-color w-5 h-5 shrink-0" /> Data Pipelines e Analytics operacionais em tempo real.</li>
+                </ul>
+            </motion.div>
         </div>
       </section>
 
-      {/* Services Section */}
-      <section id="solucoes" className="py-24 px-6 border-t border-white/5 bg-black/50">
-        <div className="max-w-7xl mx-auto">
-          <div className="mb-16 md:text-center max-w-2xl mx-auto">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">A Jornada AI-First</h2>
-            <p className="text-gray-400">
-              O roadmap exato para deixar de operar no modelo tradicional e escalar com Inteligência Artificial no centro de todas as decisões.
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-6">
-            {/* Service 1 */}
-            <motion.div
-              whileHover={{ y: -5 }}
-              className="p-8 rounded-2xl border border-white/10 bg-gradient-to-b from-white/[0.03] to-transparent backdrop-blur-sm"
+      {/* SLIDE 3: A JORNADA AI-FIRST */}
+      <section ref={el => {sectionsRef.current[2] = el}} className="min-h-screen flex flex-col items-center justify-center px-6 py-16">
+        <motion.div 
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="text-center mb-14"
+        >
+            <h2 className="text-4xl md:text-5xl font-black">A Jornada AI-First</h2>
+            <p className="mira-text-soft text-lg mt-3">Escalando com Inteligência Artificial no centro de todas as decisões.</p>
+        </motion.div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 w-full max-w-6xl">
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.9 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              viewport={{ once: true }}
+              className="mira-glass-card p-8 relative overflow-hidden"
             >
-              <div className="w-12 h-12 rounded-xl bg-blue-500/10 flex items-center justify-center mb-6">
-                <Bot className="w-6 h-6 text-blue-400" />
-              </div>
-              <h3 className="text-xl font-bold mb-3">Squads Autônomos (Multi-Agent)</h3>
-              <p className="text-gray-400 text-sm leading-relaxed mb-6">
-                Não é apenas um chatbot. Nós implantamos ecossistemas onde agentes especialistas (Analistas, Arquitetos, QA) trabalham juntos em fluxos complexos.
-              </p>
-              <ul className="space-y-2">
-                {['Agentes Especialistas', 'Tomada de Decisão', 'Operação 24/7'].map((item, i) => (
-                  <li key={i} className="flex items-center gap-2 text-sm text-gray-300">
-                    <CheckCircle2 className="w-4 h-4 text-blue-500" /> {item}
-                  </li>
-                ))}
-              </ul>
+                <div className="mira-icon-hero mb-6"><Bot className="mira-primary-color w-6 h-6" /></div>
+                <h3 className="text-xl font-bold mb-3">Squads Autônomos</h3>
+                <p className="text-sm mira-text-soft mb-6">Não é apenas um chatbot. Implantamos ecossistemas onde agentes especialistas trabalham juntos.</p>
+                <ul className="space-y-2">
+                    <li className="flex items-center gap-2 text-sm mira-text-softer"><CheckCircle2 className="w-4 h-4 mira-primary-color" /> Decisão Multi-Agent</li>
+                    <li className="flex items-center gap-2 text-sm mira-text-softer"><CheckCircle2 className="w-4 h-4 mira-primary-color" /> Operação 24/7</li>
+                </ul>
             </motion.div>
-
-            {/* Service 2 */}
-            <motion.div
-              whileHover={{ y: -5 }}
-              className="p-8 rounded-2xl border border-white/10 bg-gradient-to-b from-white/[0.03] to-transparent backdrop-blur-sm relative overflow-hidden"
+            
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.9 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.1 }}
+              className="mira-glass-card p-8 relative overflow-hidden"
             >
-              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 to-violet-500" />
-              <div className="w-12 h-12 rounded-xl bg-violet-500/10 flex items-center justify-center mb-6">
-                <Code className="w-6 h-6 text-violet-400" />
-              </div>
-              <h3 className="text-xl font-bold mb-3">Aplicações Web & Landing Pages</h3>
-              <p className="text-gray-400 text-sm leading-relaxed mb-6">
-                Sites de alta performance projetados para conversão e arquitetura premium. Interfaces que combinam estética "Wow!" com velocidade absurda.
-              </p>
-              <ul className="space-y-2">
-                {['Alta Conversão', 'Design System Premium', 'SEO Otimizado'].map((item, i) => (
-                  <li key={i} className="flex items-center gap-2 text-sm text-gray-300">
-                    <CheckCircle2 className="w-4 h-4 text-violet-500" /> {item}
-                  </li>
-                ))}
-              </ul>
+                <div className="mira-icon-hero mb-6 bg-violet-900/20 border-violet-500/30"><Code className="text-violet-400 w-6 h-6" /></div>
+                <h3 className="text-xl font-bold mb-3">Aplicações Web</h3>
+                <p className="text-sm mira-text-soft mb-6">Sites de alta performance projetados para conversão com arquitetura Next.js Premium.</p>
+                <ul className="space-y-2">
+                    <li className="flex items-center gap-2 text-sm mira-text-softer"><CheckCircle2 className="w-4 h-4 text-violet-400" /> Alta Conversão</li>
+                    <li className="flex items-center gap-2 text-sm mira-text-softer"><CheckCircle2 className="w-4 h-4 text-violet-400" /> SSR e SEO Otimizado</li>
+                </ul>
             </motion.div>
-
-            {/* Service 3 */}
-            <motion.div
-              whileHover={{ y: -5 }}
-              className="p-8 rounded-2xl border border-white/10 bg-gradient-to-b from-white/[0.03] to-transparent backdrop-blur-sm"
+            
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.9 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.2 }}
+              className="mira-glass-card p-8 relative overflow-hidden"
             >
-              <div className="w-12 h-12 rounded-xl bg-green-500/10 flex items-center justify-center mb-6">
-                <Server className="w-6 h-6 text-green-400" />
-              </div>
-              <h3 className="text-xl font-bold mb-3">Infraestrutura IA (LLMOps)</h3>
-              <p className="text-gray-400 text-sm leading-relaxed mb-6">
-                A espinha dorsal tecnológica. Engenharia de dados, conectores empresariais e sistemas baseados em LLM com conformidade total e segurança de ponta.
-              </p>
-              <ul className="space-y-2">
-                {['Integração de Sistemas', 'Governança (LGPD)', 'Escalabilidade'].map((item, i) => (
-                  <li key={i} className="flex items-center gap-2 text-sm text-gray-300">
-                    <CheckCircle2 className="w-4 h-4 text-green-500" /> {item}
-                  </li>
-                ))}
-              </ul>
+                <div className="mira-icon-hero mb-6 bg-green-900/20 border-green-500/30"><Server className="text-green-400 w-6 h-6" /></div>
+                <h3 className="text-xl font-bold mb-3">Infraestrutura LLMOps</h3>
+                <p className="text-sm mira-text-soft mb-6">Engenharia de dados e LLMs com conformidade total e segurança de ponta.</p>
+                <ul className="space-y-2">
+                    <li className="flex items-center gap-2 text-sm mira-text-softer"><CheckCircle2 className="w-4 h-4 text-green-400" /> Governança (LGPD)</li>
+                    <li className="flex items-center gap-2 text-sm mira-text-softer"><CheckCircle2 className="w-4 h-4 text-green-400" /> Escalabilidade</li>
+                </ul>
             </motion.div>
-          </div>
         </div>
       </section>
 
-      {/* Industries / Niches Section */}
-      <section id="nichos" className="py-24 px-6 border-t border-white/5 bg-black">
-        <div className="max-w-7xl mx-auto">
-          <div className="mb-16 md:text-center max-w-2xl mx-auto">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">Dominamos Setores Complexos</h2>
-            <p className="text-gray-400">
-              Nossa infraestrutura LLMOps é desenhada para nichos onde segurança (LGPD), precisão documental e escalabilidade não são opcionais.
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-6">
-            {/* Industry 1: Jurídico */}
-            <motion.div
-              whileHover={{ scale: 1.02 }}
-              className="p-8 rounded-2xl border border-white/10 bg-[#0a0a0a] relative group"
+      {/* SLIDE 4: DATA TO REVENUE */}
+      <section ref={el => {sectionsRef.current[3] = el}} className="min-h-screen flex flex-col items-center justify-center px-6 py-16">
+        <motion.div 
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="text-center max-w-3xl mx-auto mb-16"
+        >
+            <h2 className="text-4xl md:text-5xl font-black mb-4">Transformamos Dados em Receita</h2>
+            <p className="mira-text-soft text-lg mt-3">Segurança absoluta (Zero Trust) como vantagem competitiva.</p>
+        </motion.div>
+        
+        <div className="grid md:grid-cols-2 gap-8 w-full max-w-5xl">
+            <motion.div 
+              initial={{ opacity: 0, x: -30 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              className="mira-glass-card p-10 relative overflow-hidden group"
             >
-              <div className="absolute inset-0 bg-blue-500/5 opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl" />
-              <div className="w-12 h-12 rounded-xl bg-blue-500/10 flex items-center justify-center mb-6">
-                <Scale className="w-6 h-6 text-blue-400" />
-              </div>
-              <h3 className="text-xl font-bold mb-3">Escritórios & LegalTech</h3>
-              <p className="text-gray-400 text-sm leading-relaxed">
-                Cockpits Jurídicos com RAG avançado usando chunking semântico (Artigos/Incisos). Acelere a busca de jurisprudência e análise de petições com Sigilo Total (arquitetura Zero Trust e proteção contra vazamentos).
-              </p>
-            </motion.div>
-
-            {/* Industry 2: Educação */}
-            <motion.div
-              whileHover={{ scale: 1.02 }}
-              className="p-8 rounded-2xl border border-white/10 bg-[#0a0a0a] relative group"
-            >
-              <div className="absolute inset-0 bg-violet-500/5 opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl" />
-              <div className="w-12 h-12 rounded-xl bg-violet-500/10 flex items-center justify-center mb-6">
-                <GraduationCap className="w-6 h-6 text-violet-400" />
-              </div>
-              <h3 className="text-xl font-bold mb-3">EdTechs & Universidades</h3>
-              <p className="text-gray-400 text-sm leading-relaxed">
-                Mentores Autônomos 24/7 conectados às suas apostilas e bases de conhecimento. Retenção radical de alunos, com perfis anonimizados antes do treinamento para garantia total da LGPD.
-              </p>
-            </motion.div>
-
-            {/* Industry 3: Negócios */}
-            <motion.div
-              whileHover={{ scale: 1.02 }}
-              className="p-8 rounded-2xl border border-white/10 bg-[#0a0a0a] relative group"
-            >
-              <div className="absolute inset-0 bg-green-500/5 opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl" />
-              <div className="w-12 h-12 rounded-xl bg-green-500/10 flex items-center justify-center mb-6">
-                <Building2 className="w-6 h-6 text-green-400" />
-              </div>
-              <h3 className="text-xl font-bold mb-3">Imobiliárias & B2B</h3>
-              <p className="text-gray-400 text-sm leading-relaxed">
-                Esqueça os "leads que esfriam". Squads comerciais que qualificam clientes no catálogo em tempo real, conectam-se direto ao seu CRM e escalam o faturamento eliminando gargalos de Backoffice.
-              </p>
-            </motion.div>
-          </div>
-        </div>
-      </section>
-
-      {/* Data to Revenue & Compliance Section */}
-      <section className="py-24 px-6 bg-gradient-to-b from-black to-[#050505] border-t border-white/5">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center max-w-3xl mx-auto mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">Transformamos Dados em Receita <br className="hidden md:block" />(e Segurança em Vantagem Competitiva)</h2>
-            <p className="text-gray-400">
-              Na Innovate e Solve IA, nossa engenharia não foca só em eficiência algorítmica, mas em construir infraestruturas de lucro e compliance absoluto.
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-2 gap-8">
-            <div className="p-10 rounded-3xl border border-white/10 bg-gradient-to-tr from-white/[0.02] to-transparent relative overflow-hidden group">
-              <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:opacity-20 transition-opacity">
-                <Server className="w-32 h-32" />
-              </div>
-              <h3 className="text-2xl font-bold mb-4">Data Pipelines & Business Intelligence</h3>
-              <p className="text-gray-400 mb-6 relative z-10">
-                Construímos a fundação para sua empresa escalar com pipelines de dados que rastreiam, processam e transformam informações brutas em insights preditivos.
-              </p>
+              <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity"><LineChart className="w-32 h-32 text-blue-500" /></div>
+              <h3 className="text-2xl font-bold mb-4 relative z-10">Data Pipelines & Business Intelligence</h3>
+              <p className="mira-text-soft mb-6 relative z-10">Fundação para sua empresa escalar com rastreio, processamento e transformação de informações em insights preditivos.</p>
               <ul className="space-y-3 relative z-10">
-                <li className="flex items-center gap-2 text-sm text-gray-300"><CheckCircle2 className="w-4 h-4 text-blue-500" /> Decisões baseadas em dados (não achismos)</li>
-                <li className="flex items-center gap-2 text-sm text-gray-300"><CheckCircle2 className="w-4 h-4 text-blue-500" /> Qualificação automática de oportunidades</li>
-                <li className="flex items-center gap-2 text-sm text-gray-300"><CheckCircle2 className="w-4 h-4 text-blue-500" /> Dashboards operacionais em tempo real</li>
+                <li className="flex items-center gap-2 text-sm text-gray-300"><CheckCircle2 className="w-4 h-4 text-blue-500" /> Decisões baseadas em dados</li>
+                <li className="flex items-center gap-2 text-sm text-gray-300"><CheckCircle2 className="w-4 h-4 text-blue-500" /> Dashboards em tempo real</li>
               </ul>
-            </div>
-
-            <div className="p-10 rounded-3xl border border-white/10 bg-gradient-to-tr from-white/[0.02] to-transparent relative overflow-hidden group">
-              <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:opacity-20 transition-opacity">
-                <Scale className="w-32 h-32" />
-              </div>
-              <h3 className="text-2xl font-bold mb-4">Zero Trust & Compliance (LGPD/CVM)</h3>
-              <p className="text-gray-400 mb-6 relative z-10">
-                Adequação completa para nichos regulados. Nossos LLMOps operam sob os mais rígidos padrões de segurança globais.
-              </p>
+            </motion.div>
+            
+            <motion.div 
+              initial={{ opacity: 0, x: 30 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              className="mira-glass-card p-10 relative overflow-hidden group"
+            >
+              <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity"><Lock className="w-32 h-32 text-violet-500" /></div>
+              <h3 className="text-2xl font-bold mb-4 relative z-10">Zero Trust & Compliance</h3>
+              <p className="mira-text-soft mb-6 relative z-10">Adequação completa para nichos regulados. Operação sob os mais rígidos padrões globais (LGPD/CVM).</p>
               <ul className="space-y-3 relative z-10">
-                <li className="flex items-center gap-2 text-sm text-gray-300"><CheckCircle2 className="w-4 h-4 text-violet-500" /> Anonimização rigorosa de dados sensíveis</li>
-                <li className="flex items-center gap-2 text-sm text-gray-300"><CheckCircle2 className="w-4 h-4 text-violet-500" /> RAG isolado e seguro para documentos legais</li>
-                <li className="flex items-center gap-2 text-sm text-gray-300"><CheckCircle2 className="w-4 h-4 text-violet-500" /> Infraestrutura sem vazamento de prompt</li>
+                <li className="flex items-center gap-2 text-sm text-gray-300"><CheckCircle2 className="w-4 h-4 text-violet-500" /> Anonimização de dados sensíveis</li>
+                <li className="flex items-center gap-2 text-sm text-gray-300"><CheckCircle2 className="w-4 h-4 text-violet-500" /> RAG isolado e sem vazamentos</li>
               </ul>
-            </div>
-          </div>
+            </motion.div>
         </div>
       </section>
 
-      {/* AI-First OS Architectures Section */}
-      <section id="ecossistema" className="py-24 px-6 border-t border-white/5 relative bg-black">
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-3xl h-[400px] bg-blue-900/10 blur-[100px] rounded-full pointer-events-none -z-10" />
-
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-5xl font-bold mb-6">O que é um <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-violet-500">AI-First OS</span>?</h2>
-            <p className="text-gray-400 max-w-3xl mx-auto text-lg">
-              Esqueça chatbots que apenas respondem perguntas. Nós construímos o "Sistema Operacional" da sua empresa: uma infraestrutura central que orquestra seus dados, operações e interações com o cliente.
-            </p>
-          </div>
-
-          <div className="space-y-12">
-            {/* Jurídico OS */}
-            <div className="glass-card p-8 md:p-10 rounded-3xl border border-white/10 bg-[#050505] relative overflow-hidden group">
-              <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/5 blur-[80px] rounded-full group-hover:bg-blue-500/10 transition-colors" />
-              <div className="grid md:grid-cols-3 gap-8 relative z-10">
-                <div className="md:col-span-1 flex flex-col justify-center">
-                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-blue-500/20 bg-blue-500/10 text-blue-400 text-xs font-bold uppercase tracking-wider mb-4 self-start">
-                    LegalTech
-                  </div>
-                  <h3 className="text-2xl font-bold mb-3">Cockpit Jurídico OS</h3>
-                  <p className="text-gray-400 text-sm leading-relaxed">
-                    Arquitetura Zero Trust para escritórios. O Agente não apenas pesquisa; ele cruza os fatos do cliente com a jurisprudência interna através de uma pipeline de dados 100% isolada e segura.
-                  </p>
-                </div>
-                <div className="md:col-span-2 grid sm:grid-cols-3 gap-4 items-center">
-                  <div className="p-5 rounded-xl bg-white/5 border border-white/5">
-                    <Database className="text-blue-400 w-6 h-6 mb-3" />
-                    <h4 className="font-bold text-sm mb-2">1. RAG Privado</h4>
-                    <p className="text-xs text-gray-400">Ingestão de 10.000+ peças processuais no seu banco vetorial privado. Seus dados nunca treinam LLMs públicos.</p>
-                  </div>
-                  <div className="p-5 rounded-xl bg-white/5 border border-white/5 relative">
-                    <ArrowRight className="absolute -left-5 top-1/2 -translate-y-1/2 text-gray-700 hidden sm:block w-4 h-4" />
-                    <Workflow className="text-blue-400 w-6 h-6 mb-3" />
-                    <h4 className="font-bold text-sm mb-2">2. Esboço Autônomo</h4>
-                    <p className="text-xs text-gray-400">O Squad analisa o caso inicial, seleciona a melhor estratégia do seu arquivo e rascunha a petição em segundos.</p>
-                  </div>
-                  <div className="p-5 rounded-xl bg-white/5 border border-white/5 relative">
-                    <ArrowRight className="absolute -left-5 top-1/2 -translate-y-1/2 text-gray-700 hidden sm:block w-4 h-4" />
-                    <Lock className="text-blue-400 w-6 h-6 mb-3" />
-                    <h4 className="font-bold text-sm mb-2">3. Revisão (Human)</h4>
-                    <p className="text-xs text-gray-400">O LLM não peticiona. Ele entrega o material pronto no seu ERP para que o Advogado apenas aprove e assine.</p>
-                  </div>
-                </div>
-              </div>
+      {/* SLIDE 5: JURÍDICO OS */}
+      <section ref={el => {sectionsRef.current[4] = el}} className="min-h-screen flex flex-col items-center justify-center px-6 py-16">
+        <motion.div 
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="text-center mb-10 w-full max-w-5xl text-left md:text-center"
+        >
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-blue-500/20 bg-blue-500/10 text-blue-400 text-xs font-bold uppercase tracking-wider mb-4">
+              LegalTech
             </div>
-
-            {/* B2B OS */}
-            <div className="glass-card p-8 md:p-10 rounded-3xl border border-white/10 bg-[#050505] relative overflow-hidden group">
-              <div className="absolute top-0 right-0 w-64 h-64 bg-green-500/5 blur-[80px] rounded-full group-hover:bg-green-500/10 transition-colors" />
-              <div className="grid md:grid-cols-3 gap-8 relative z-10">
-                <div className="md:col-span-1 flex flex-col justify-center">
-                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-green-500/20 bg-green-500/10 text-green-400 text-xs font-bold uppercase tracking-wider mb-4 self-start">
-                    B2B & Enterprise
-                  </div>
-                  <h3 className="text-2xl font-bold mb-3">Revenue Pipeline OS</h3>
-                  <p className="text-gray-400 text-sm leading-relaxed">
-                    Infraestrutura orientada a faturamento. Eliminamos a latência entre captura do lead, qualificação e agendamento comercial.
-                  </p>
-                </div>
-                <div className="md:col-span-2 grid sm:grid-cols-3 gap-4 items-center">
-                  <div className="p-5 rounded-xl bg-white/5 border border-white/5">
-                    <Database className="text-green-400 w-6 h-6 mb-3" />
-                    <h4 className="font-bold text-sm mb-2">1. Captura</h4>
-                    <p className="text-xs text-gray-400">Landing Pages otimizadas e canais de WhatsApp recolhendo dores e dados primários do lead.</p>
-                  </div>
-                  <div className="p-5 rounded-xl bg-white/5 border border-white/5 relative">
-                    <ArrowRight className="absolute -left-5 top-1/2 -translate-y-1/2 text-gray-700 hidden sm:block w-4 h-4" />
-                    <Workflow className="text-green-400 w-6 h-6 mb-3" />
-                    <h4 className="font-bold text-sm mb-2">2. Qualificação IA</h4>
-                    <p className="text-xs text-gray-400">Agente qualifica intenção com catálogo, integra ao CRM da empresa e faz agendamento (Zapier/n8n).</p>
-                  </div>
-                  <div className="p-5 rounded-xl bg-white/5 border border-white/5 relative">
-                    <ArrowRight className="absolute -left-5 top-1/2 -translate-y-1/2 text-gray-700 hidden sm:block w-4 h-4" />
-                    <LineChart className="text-green-400 w-6 h-6 mb-3" />
-                    <h4 className="font-bold text-sm mb-2">3. Analytics & BI</h4>
-                    <p className="text-xs text-gray-400">Dashboards em tempo real para o gestor: previsão de receita, retenção no funil e ROI de marketing.</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Edu OS */}
-            <div className="glass-card p-8 md:p-10 rounded-3xl border border-white/10 bg-[#050505] relative overflow-hidden group">
-              <div className="absolute top-0 right-0 w-64 h-64 bg-violet-500/5 blur-[80px] rounded-full group-hover:bg-violet-500/10 transition-colors" />
-              <div className="grid md:grid-cols-3 gap-8 relative z-10">
-                <div className="md:col-span-1 flex flex-col justify-center">
-                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-violet-500/20 bg-violet-500/10 text-violet-400 text-xs font-bold uppercase tracking-wider mb-4 self-start">
-                    Educação
-                  </div>
-                  <h3 className="text-2xl font-bold mb-3">EdTech Mentor OS</h3>
-                  <p className="text-gray-400 text-sm leading-relaxed">
-                    Sua plataforma de curso transformada em um ecossistema inteligente de ensino, focado na retenção radical do aluno.
-                  </p>
-                </div>
-                <div className="md:col-span-2 grid sm:grid-cols-3 gap-4 items-center">
-                  <div className="p-5 rounded-xl bg-white/5 border border-white/5">
-                    <Database className="text-violet-400 w-6 h-6 mb-3" />
-                    <h4 className="font-bold text-sm mb-2">1. Ingestão Dinâmica</h4>
-                    <p className="text-xs text-gray-400">Vetorização automática de todas as apostilas e vídeos enviadas na plataforma, respeitando Direitos Autorais.</p>
-                  </div>
-                  <div className="p-5 rounded-xl bg-white/5 border border-white/5 relative">
-                    <ArrowRight className="absolute -left-5 top-1/2 -translate-y-1/2 text-gray-700 hidden sm:block w-4 h-4" />
-                    <Workflow className="text-violet-400 w-6 h-6 mb-3" />
-                    <h4 className="font-bold text-sm mb-2">2. Perfil Individual</h4>
-                    <p className="text-xs text-gray-400">Sistema rastreia desempenho individual. Anonimização via LGPD para análises comportamentais preditivas.</p>
-                  </div>
-                  <div className="p-5 rounded-xl bg-white/5 border border-white/5 relative">
-                    <ArrowRight className="absolute -left-5 top-1/2 -translate-y-1/2 text-gray-700 hidden sm:block w-4 h-4" />
-                    <Bot className="text-violet-400 w-6 h-6 mb-3" />
-                    <h4 className="font-bold text-sm mb-2">3. Tutor 24/7</h4>
-                    <p className="text-xs text-gray-400">Respostas contextuais ao momento do módulo do aluno. Método socrático para ensinar em vez de só dar a resposta.</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-          </div>
-        </div>
+            <h2 className="text-4xl md:text-5xl font-black mb-4">Cockpit Jurídico OS</h2>
+            <p className="mira-text-soft text-lg">Arquitetura Zero Trust para escritórios. RAG avançado com Sigilo Absoluto.</p>
+        </motion.div>
+        
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.95 }}
+          whileInView={{ opacity: 1, scale: 1 }}
+          viewport={{ once: true }}
+          className="mira-glass-card w-full max-w-5xl p-8 relative"
+        >
+            <div ref={fluxoLegalRef} className="mira-anim-stage" style={{aspectRatio: '21/9'}}></div>
+        </motion.div>
       </section>
 
-      {/* Footer */}
-      <footer className="py-12 px-6 border-t border-white/10 bg-black">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
-          <div className="font-bold text-xl tracking-tighter">
-            Innovate e Solve <span className="text-blue-500">IA</span>
-          </div>
-          <div className="flex items-center gap-6 text-sm text-gray-500">
-            <a href="https://www.linkedin.com/in/diegowilliam-tech/" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors flex items-center gap-2"><Linkedin className="w-4 h-4" /> LinkedIn</a>
-            <a href="https://wa.me/5598988646888" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors flex items-center gap-2"><MessageCircle className="w-4 h-4" /> (98) 98864-6888</a>
-          </div>
-          <div className="text-sm text-gray-600">
-            © 2026 Diego William. All rights reserved.
-          </div>
-        </div>
-      </footer>
+      {/* SLIDE 6: B2B OS */}
+      <section ref={el => {sectionsRef.current[5] = el}} className="min-h-screen flex flex-col items-center justify-center px-6 py-16">
+        <motion.div 
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="text-center mb-10 w-full max-w-5xl text-left md:text-center"
+        >
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-green-500/20 bg-green-500/10 text-green-400 text-xs font-bold uppercase tracking-wider mb-4">
+              B2B & Enterprise
+            </div>
+            <h2 className="text-4xl md:text-5xl font-black mb-4">Revenue Pipeline OS</h2>
+            <p className="mira-text-soft text-lg">Infraestrutura orientada a faturamento. Eliminamos a latência comercial.</p>
+        </motion.div>
+        
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.95 }}
+          whileInView={{ opacity: 1, scale: 1 }}
+          viewport={{ once: true }}
+          className="mira-glass-card w-full max-w-5xl p-8 relative"
+        >
+            <div ref={fluxoB2BRef} className="mira-anim-stage" style={{aspectRatio: '21/9'}}></div>
+        </motion.div>
+      </section>
+
+      {/* SLIDE 7: EDU OS */}
+      <section ref={el => {sectionsRef.current[6] = el}} className="min-h-screen flex flex-col items-center justify-center px-6 py-16">
+        <motion.div 
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="text-center mb-10 w-full max-w-5xl text-left md:text-center"
+        >
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-violet-500/20 bg-violet-500/10 text-violet-400 text-xs font-bold uppercase tracking-wider mb-4">
+              Educação
+            </div>
+            <h2 className="text-4xl md:text-5xl font-black mb-4">EdTech Mentor OS</h2>
+            <p className="mira-text-soft text-lg">Retenção radical de alunos através de Tutores 24/7 Contextuais.</p>
+        </motion.div>
+        
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.95 }}
+          whileInView={{ opacity: 1, scale: 1 }}
+          viewport={{ once: true }}
+          className="mira-glass-card w-full max-w-5xl p-8 relative"
+        >
+            <div ref={fluxoEduRef} className="mira-anim-stage" style={{aspectRatio: '21/9'}}></div>
+        </motion.div>
+      </section>
+
+      {/* SLIDE 8: CTA */}
+      <section ref={el => {sectionsRef.current[7] = el}} className="min-h-screen flex flex-col items-center justify-center relative overflow-hidden px-6">
+        <div className="absolute inset-0 pointer-events-none" style={{
+            background: 'radial-gradient(ellipse at 50% 60%, var(--mira-glow-strong), transparent 65%)',
+            animation: 'var(--animate-mira-pulse)'
+        }}></div>
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.9 }}
+          whileInView={{ opacity: 1, scale: 1 }}
+          viewport={{ once: true }}
+          className="relative z-10 text-center max-w-3xl"
+        >
+            <div className="mira-icon-hero mx-auto mb-8" style={{ width:'72px', height:'72px', borderRadius:'20px' }}>
+                <Zap className="mira-primary-color w-9 h-9" />
+            </div>
+            <h2 className="text-5xl md:text-6xl font-black mb-6">Pronto para a Evolução?</h2>
+            <p className="text-xl mira-text-soft mb-10">Agende uma demonstração e descubra como uma infraestrutura LLMOps estruturada pode escalar sua empresa.</p>
+            <div className="flex flex-wrap items-center justify-center gap-4">
+                <a href="https://wa.me/5598988646888" target="_blank" rel="noopener noreferrer" className="mira-attribute-pill px-8 py-4 text-base font-bold bg-blue-600 hover:bg-blue-700 text-white border-0 transition-all shadow-lg hover:shadow-blue-500/50 flex items-center">
+                    <MessageCircle className="inline w-5 h-5 mr-2" /> Iniciar Projeto
+                </a>
+            </div>
+            
+            <div className="flex items-center justify-center gap-6 text-sm text-gray-500 mt-16">
+              <a href="https://www.linkedin.com/in/diegowilliam-tech/" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors flex items-center gap-2"><Linkedin className="w-4 h-4" /> LinkedIn</a>
+            </div>
+            <p className="mira-text-softer mt-8 text-xs tracking-widest uppercase">Innovate e Solve IA © 2026</p>
+        </motion.div>
+      </section>
+
       <ChatWidget />
     </main>
   );
